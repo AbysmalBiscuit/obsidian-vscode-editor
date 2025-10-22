@@ -31,7 +31,7 @@ jobs:
 
             - name: Install dependencies and build
               if: ${{ steps.release.outputs.release_created }}
-              run: npm install -g corepack@latest && corepack enable && npm run build
+              run: npm install && npm run build
 
             - name: Create release archive
               if: ${{ steps.release.outputs.release_created }}
