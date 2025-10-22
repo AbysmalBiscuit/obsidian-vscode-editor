@@ -63,10 +63,19 @@ export class CodeFilesSettingsTab extends PluginSettingTab {
 			.addTextArea(text => text
 				.setValue(this.plugin.settings.extensions.join(","))
 				.onChange(async (value) => {
-					this.plugin.settings.extensions = value.split(",");
+					this.plugin.settings.extensions = value.split(",").map(ext => ext.trim());
 					await this.plugin.saveSettings();
 				})).setClass("setting_ext");
 
+		new Setting(containerEl)
+			.setName(t('FONT_FAMILY'))
+			.setDesc(t('FONT_FAMILY_DESC'))
+			.addTextArea(text => text
+				.setValue(this.plugin.settings.fontFamily.join(","))
+				.onChange(async (value) => {
+					this.plugin.settings.fontFamily = value.split(",").map(font => font.trim());
+					await this.plugin.saveSettings();
+				})).setClass("setting_font_family");
 
 		new Setting(containerEl)
 			.setName(t('WORDWRAP'))
