@@ -17,20 +17,44 @@ jobs:
             - uses: googleapis/release-please-action@v4
               id: release
               with:
-                  # this assumes that you have created a personal access token
-                  # (PAT) and configured it as a GitHub action secret named
-                  # `MY_RELEASE_PLEASE_TOKEN` (this secret name is not important).
                   token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-                  # this is a built-in strategy in release-please, see "Action Inputs"
-                  # for more options
-                  release-type: simple
+                  release-type: node
+
+            # Only run build/deploy steps if a release was created
             - uses: actions/checkout@v4
+              if: ${{ steps.release.outputs.release_created }}
+
+            - uses: actions/setup-node@v4
+              if: ${{ steps.release.outputs.release_created }}
+              with:
+                  node-version: "22"
+
+            - name: Install dependencies and build
+              if: ${{ steps.release.outputs.release_created }}
+              run: npm install -g corepack@latest && corepack enable && npm run build
+
+            - name: Create release archive
+              if: ${{ steps.release.outputs.release_created }}
+              run: |
+                  mkdir -p obsidian-vscode-editor
+                  cp styles.css obsidian-vscode-editor/
+                  cp manifest.json obsidian-vscode-editor/
+                  cp main.js obsidian-vscode-editor/
+                  zip -r obsidian-vscode-editor.zip obsidian-vscode-editor/
+
+            - name: Upload release assets
+              if: ${{ steps.release.outputs.release_created }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  gh release upload ${{ steps.release.outputs.tag_name }} obsidian-vscode-editor.zip
+
             - name: tag major and minor versions
               if: ${{ steps.release.outputs.release_created }}
               run: |
                   git config user.name github-actions[bot]
                   git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-                  git remote add gh-token "https://${{ secrets.GITHUB_TOKEN }}@AbysmalBiscuit/insert-inlay-hints.nvim.git"
+                  git remote add gh-token "https://${{ secrets.GITHUB_TOKEN }}@github.com/AbysmalBiscuit/insert-inlay-hints.nvim.git"
                   git tag -d v${{ steps.release.outputs.major }} || true
                   git tag -d v${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }} || true
                   git push origin :v${{ steps.release.outputs.major }} || true
