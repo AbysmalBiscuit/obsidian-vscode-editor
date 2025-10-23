@@ -29,6 +29,17 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Update manifest version
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          sed --in-place --regexp-extended 's;"version": ".+?";"version": "'"${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }}"'";' manifest.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git remote add gh-token "https://${{ secrets.GITHUB_TOKEN }}@github.com/AbysmalBiscuit/insert-inlay-hints.nvim.git"
+          git add manifest.json
+          git commit -m "chore(release): bump manifest.json version"
+          git push origin
+
       - name: Install dependencies and build
         if: ${{ steps.release.outputs.release_created }}
         run: npm install && npm run build
